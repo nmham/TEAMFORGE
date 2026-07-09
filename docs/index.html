@@ -879,7 +879,10 @@
     }
 
     function rankApiUrl() {
+      const configured = window.TEAMFORGE_RANK_API_URL || localStorage.getItem("teamforge-rank-api-url");
+      if (configured) return configured.replace(/\/$/, "").endsWith("/api/ranks") ? configured.replace(/\/$/, "") : `${configured.replace(/\/$/, "")}/api/ranks`;
       if (location.protocol === "file:") return "http://127.0.0.1:8790/api/ranks";
+      if (location.hostname.endsWith("github.io")) return "";
       return `${location.origin}/api/ranks`;
     }
 
@@ -921,7 +924,7 @@
         button.textContent = "ランク同期";
         if (!silent) {
           const local = location.hostname === "127.0.0.1" || location.hostname === "localhost";
-          showToast(local ? "ランク同期サーバーを起動してください" : "公開版ではランク同期APIが未設定です");
+          showToast(local ? "ランク同期サーバーを起動してください" : "ランク同期APIに接続できません");
         }
       } finally {
         button.disabled = false;

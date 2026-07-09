@@ -1,0 +1,1824 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>TeamForge</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #060914;
+      --panel: rgba(249, 244, 241, .085);
+      --panel-2: rgba(249, 244, 241, .12);
+      --line: rgba(249, 244, 241, .2);
+      --text: #f9f4f1;
+      --muted: #d6c9dc;
+      --red: #e7a0ad;
+      --yellow: #e7d18a;
+      --green: #9ed7bd;
+      --cyan: #88a0ff;
+      --violet: #bdaac9;
+      --shadow: 0 18px 48px rgba(0, 0, 0, .28);
+    }
+
+    * { box-sizing: border-box; }
+
+    html {
+      overflow-x: hidden;
+    }
+
+    body {
+      margin: 0;
+      font-family: "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+      background:
+        linear-gradient(115deg, rgba(56, 81, 252, .22), transparent 28%),
+        linear-gradient(152deg, transparent 42%, rgba(189, 170, 201, .16) 48%, transparent 58%),
+        linear-gradient(180deg, #060914 0%, #11182e 48%, #202847 100%);
+      color: var(--text);
+      min-height: 100vh;
+      overflow-x: hidden;
+      -webkit-tap-highlight-color: rgba(56, 81, 252, .2);
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      z-index: -1;
+      pointer-events: none;
+      background:
+        linear-gradient(100deg, transparent 0 17%, rgba(249, 244, 241, .075) 18%, transparent 19% 100%),
+        linear-gradient(103deg, transparent 0 37%, rgba(136, 160, 255, .13) 38%, transparent 39% 100%),
+        linear-gradient(106deg, transparent 0 63%, rgba(189, 170, 201, .1) 64%, transparent 65% 100%);
+      opacity: .72;
+    }
+
+    button, select {
+      font: inherit;
+    }
+
+    button {
+      border: 1px solid rgba(249, 244, 241, .22);
+      background: rgba(249, 244, 241, .08);
+      color: var(--text);
+      border-radius: 7px;
+      padding: .55rem .72rem;
+      cursor: pointer;
+      min-height: 42px;
+      touch-action: manipulation;
+      transition: transform .14s ease, border-color .14s ease, background .14s ease;
+    }
+
+    button:hover {
+      border-color: rgba(136, 160, 255, .88);
+      background: rgba(136, 160, 255, .16);
+    }
+
+    button:focus-visible,
+    select:focus-visible,
+    a:focus-visible,
+    [role="button"]:focus-visible {
+      outline: 3px solid rgba(56, 81, 252, .72);
+      outline-offset: 3px;
+    }
+
+    .skip-link {
+      position: fixed;
+      left: 16px;
+      top: 12px;
+      z-index: 10;
+      transform: translateY(-140%);
+      border-radius: 7px;
+      background: #f9f4f1;
+      color: #202847;
+      padding: 10px 12px;
+      font-weight: 800;
+      text-decoration: none;
+      transition: transform .14s ease;
+    }
+
+    .skip-link:focus-visible {
+      transform: translateY(0);
+    }
+
+    select {
+      width: 100%;
+      border: 1px solid var(--line);
+      background: rgba(6, 9, 20, .58);
+      color: var(--text);
+      border-radius: 7px;
+      padding: .52rem .6rem;
+    }
+
+    input {
+      width: 100%;
+      border: 1px solid var(--line);
+      background: rgba(6, 9, 20, .58);
+      color: var(--text);
+      border-radius: 7px;
+      padding: .52rem .6rem;
+    }
+
+    .app {
+      width: min(1480px, 100%);
+      margin: 0 auto;
+      padding: 18px;
+    }
+
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+      margin-bottom: 14px;
+      padding: 14px 16px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(6, 9, 20, .68);
+      box-shadow: var(--shadow);
+      color: #f9f4f1;
+      backdrop-filter: blur(16px);
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(1.7rem, 3vw, 3.3rem);
+      line-height: 1;
+      letter-spacing: 0;
+      text-wrap: balance;
+      color: #f9f4f1;
+    }
+
+    .subtitle {
+      margin: .55rem 0 0;
+      color: var(--muted);
+      max-width: 780px;
+      line-height: 1.55;
+    }
+
+    .actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    header .actions button {
+      background: rgba(249, 244, 241, .1);
+      color: var(--text);
+      border-color: rgba(249, 244, 241, .24);
+      font-weight: 700;
+    }
+
+    header .actions button:hover {
+      background: rgba(136, 160, 255, .2);
+      border-color: rgba(136, 160, 255, .9);
+    }
+
+    .sync-state {
+      min-width: 112px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: minmax(620px, 1.05fr) minmax(430px, .95fr);
+      grid-template-areas:
+        "map radar"
+        "personal radar"
+        "trend radar"
+        "notes radar";
+      gap: 8px 12px;
+      align-items: start;
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      overflow: hidden;
+      min-width: 0;
+      color: var(--text);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(18px);
+    }
+
+    .panel-head .selected-meta {
+      text-align: right;
+    }
+
+    .map-panel { grid-area: map; }
+    .trend-panel { grid-area: trend; }
+    .personal-notes-panel { grid-area: personal; }
+    .notes-panel { grid-area: notes; }
+    .radar-panel { grid-area: radar; }
+
+    .radar-panel {
+      position: sticky;
+      top: 12px;
+    }
+
+    .panel-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 13px 14px;
+      border-bottom: 1px solid var(--line);
+      background: rgba(249, 244, 241, .06);
+    }
+
+    .panel-head h2 {
+      margin: 0;
+      font-size: 1rem;
+      letter-spacing: 0;
+    }
+
+    .panel-body {
+      padding: 14px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      table-layout: fixed;
+      font-variant-numeric: tabular-nums;
+    }
+
+    th, td {
+      border-bottom: 1px solid rgba(249, 244, 241, .14);
+      padding: 9px 8px;
+      text-align: center;
+      vertical-align: middle;
+    }
+
+    th {
+      color: var(--muted);
+      font-weight: 650;
+      font-size: .82rem;
+    }
+
+    th:first-child, td:first-child {
+      text-align: left;
+      width: 210px;
+    }
+
+    th:nth-child(7), td:nth-child(7) {
+      width: 150px;
+    }
+
+    tr.member-row {
+      cursor: pointer;
+    }
+
+    tr.member-row:hover {
+      background: rgba(249, 244, 241, .055);
+    }
+
+    tr.member-row.active {
+      background: rgba(136, 160, 255, .18);
+      outline: 1px solid rgba(136, 160, 255, .55);
+      outline-offset: -1px;
+    }
+
+    .role {
+      display: inline-flex;
+      min-width: 64px;
+      color: #202847;
+      font-size: .74rem;
+      background: rgba(249, 244, 241, .08);
+      border: 1px solid rgba(136, 160, 255, .36);
+      border-radius: 999px;
+      padding: .18rem .48rem;
+      justify-content: center;
+      margin-bottom: 5px;
+    }
+
+    .role.Top { color: #f9f4f1; border-color: rgba(158, 215, 189, .56); background: rgba(158, 215, 189, .16); }
+    .role.Jungle { color: #f9f4f1; border-color: rgba(231, 209, 138, .56); background: rgba(231, 209, 138, .16); }
+    .role.Mid { color: #f9f4f1; border-color: rgba(136, 160, 255, .72); background: rgba(136, 160, 255, .2); }
+    .role.ADC { color: #f9f4f1; border-color: rgba(231, 160, 173, .56); background: rgba(231, 160, 173, .17); }
+    .role.Support { color: #f9f4f1; border-color: rgba(189, 170, 201, .7); background: rgba(189, 170, 201, .18); }
+
+    .summoner {
+      color: var(--muted);
+      font-size: .76rem;
+      margin-top: 3px;
+      overflow-wrap: anywhere;
+    }
+
+    .opgg-link {
+      color: var(--text);
+      text-decoration: none;
+      border-bottom: 1px solid rgba(136, 160, 255, .62);
+    }
+
+    .opgg-link:hover {
+      color: var(--cyan);
+      border-bottom-color: var(--cyan);
+    }
+
+    .score {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 32px;
+      height: 30px;
+      border-radius: 7px;
+      font-weight: 800;
+      color: #202847;
+      font-variant-numeric: tabular-nums;
+      box-shadow: none;
+    }
+
+    .low { background: #e7a0ad; color: #202847; }
+    .mid { background: #e7d18a; color: #202847; }
+    .high { background: #9ed7bd; color: #202847; }
+
+    .profile {
+      display: grid;
+      grid-template-columns: 1fr 170px;
+      gap: 12px;
+      align-items: start;
+    }
+
+    .selected-name {
+      font-size: 1.35rem;
+      font-weight: 800;
+      line-height: 1.1;
+      margin: 0;
+    }
+
+    .selected-meta {
+      color: var(--muted);
+      margin-top: 6px;
+      line-height: 1.55;
+    }
+
+    .chart-wrap {
+      display: grid;
+      place-items: center;
+      min-height: 290px;
+    }
+
+    canvas {
+      width: min(100%, 360px);
+      height: auto;
+      aspect-ratio: 1;
+      touch-action: none;
+    }
+
+    .axis-editor {
+      display: grid;
+      gap: 7px;
+    }
+
+    .axis-block {
+      background: var(--panel-2);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 8px;
+    }
+
+    .axis-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+
+    .axis-name {
+      font-weight: 750;
+      font-size: .9rem;
+    }
+
+    .axis-desc {
+      color: var(--muted);
+      font-size: .76rem;
+      line-height: 1.5;
+      margin-bottom: 7px;
+    }
+
+    .stepper {
+      display: grid;
+      grid-template-columns: repeat(10, 1fr);
+      gap: 4px;
+    }
+
+    .stepper button {
+      min-width: 0;
+      height: 30px;
+      padding: 0;
+      border-radius: 6px;
+      font-size: .72rem;
+    }
+
+    .stepper button.active {
+      background: var(--cyan);
+      color: #f9f4f1;
+      border-color: var(--cyan);
+      font-weight: 850;
+      box-shadow: none;
+    }
+
+    .label {
+      color: var(--muted);
+      font-size: .72rem;
+      font-weight: 760;
+      text-transform: uppercase;
+      letter-spacing: .05em;
+      margin-bottom: 7px;
+    }
+
+    .value {
+      line-height: 1.55;
+      font-weight: 650;
+    }
+
+    .trend-grid {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .trend-card {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel-2);
+      padding: 11px;
+      min-height: 116px;
+    }
+
+    .trend-value {
+      color: var(--cyan);
+      font-size: 1.25rem;
+      font-weight: 850;
+      line-height: 1;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .trend-bar {
+      height: 8px;
+      margin-top: 12px;
+      overflow: hidden;
+      border: 1px solid rgba(89, 97, 121, .82);
+      border-radius: 999px;
+      background: rgba(6, 9, 20, .42);
+    }
+
+    .trend-fill {
+      display: block;
+      height: 100%;
+      border-radius: inherit;
+      background: linear-gradient(90deg, var(--red), var(--yellow), var(--green));
+    }
+
+    .comment-box {
+      width: 100%;
+      min-height: 138px;
+      resize: vertical;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(6, 9, 20, .52);
+      color: var(--text);
+      padding: 12px;
+      font: inherit;
+      line-height: 1.6;
+    }
+
+    .comment-box::placeholder {
+      color: var(--muted);
+    }
+
+    .personal-note-box {
+      min-height: 260px;
+    }
+
+    .view-hidden {
+      display: none !important;
+    }
+
+    .memo-page {
+      display: grid;
+      gap: 12px;
+    }
+
+    .memo-toolbar {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 12px;
+    }
+
+    .memo-grid {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .memo-card {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+      padding: 12px;
+      min-height: 260px;
+      backdrop-filter: blur(18px);
+    }
+
+    .memo-card h3 {
+      margin: 0 0 6px;
+      font-size: 1rem;
+    }
+
+    .memo-text {
+      margin-top: 12px;
+      color: var(--text);
+      line-height: 1.65;
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+    }
+
+    .stat-note {
+      color: var(--muted);
+      font-size: .78rem;
+      line-height: 1.45;
+      margin-top: 8px;
+    }
+
+    .toast {
+      position: fixed;
+      right: 18px;
+      bottom: 18px;
+      background: rgba(249, 244, 241, .92);
+      color: #202847;
+      border-radius: 8px;
+      padding: 10px 14px;
+      box-shadow: var(--shadow);
+      opacity: 0;
+      transform: translateY(14px);
+      pointer-events: none;
+      transition: opacity .2s ease, transform .2s ease;
+      font-weight: 700;
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    @media (max-width: 1100px) {
+      .grid {
+        grid-template-columns: 1fr;
+        grid-template-areas:
+          "map"
+          "personal"
+          "trend"
+          "notes"
+          "radar";
+      }
+
+      .radar-panel {
+        position: static;
+      }
+    }
+
+    @media (max-width: 760px) {
+      .app {
+        padding: 14px;
+      }
+
+      header {
+        display: block;
+      }
+
+      .actions {
+        justify-content: flex-start;
+        margin-top: 14px;
+      }
+
+      .panel-body {
+        padding: 12px;
+      }
+
+      .table-scroll {
+        overflow-x: auto;
+      }
+
+      table {
+        min-width: 720px;
+      }
+
+      .profile {
+        grid-template-columns: 1fr;
+      }
+
+      .trend-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .memo-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <a class="skip-link" href="#main-content">本文へ移動</a>
+  <main id="main-content" class="app">
+    <header>
+      <div>
+        <h1>TeamForge</h1>
+      </div>
+      <div class="actions">
+        <button id="syncRankBtn" class="sync-state" type="button">ランク同期</button>
+        <button id="multiSearchBtn" type="button">マルチ検索</button>
+        <button id="memoPageBtn" type="button">メモページ</button>
+        <button id="saveImageBtn" type="button">ページ画像保存</button>
+        <button id="copyJsonBtn" type="button">JSONコピー</button>
+        <button id="downloadJsonBtn" type="button">JSON保存</button>
+        <button id="resetBtn" type="button">初期化</button>
+      </div>
+    </header>
+
+    <section id="mainView" class="grid">
+      <div class="panel map-panel">
+        <div class="panel-head">
+          <h2>5人の強弱マップ</h2>
+          <span id="saveState" class="selected-meta">自動保存</span>
+        </div>
+        <div class="panel-body table-scroll">
+          <table>
+            <thead>
+              <tr>
+                <th>生徒</th>
+                <th>操作</th>
+                <th>レーン基礎</th>
+                <th>戦闘判断</th>
+                <th>情報認識</th>
+                <th>再現性</th>
+                <th>ランク</th>
+              </tr>
+            </thead>
+            <tbody id="memberRows"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="panel trend-panel">
+        <div class="panel-head">
+          <h2>チーム傾向</h2>
+          <span id="trendStatus" class="selected-meta">5人平均</span>
+        </div>
+        <div class="panel-body">
+          <div id="teamTrends" class="trend-grid"></div>
+        </div>
+      </div>
+
+      <div class="panel personal-notes-panel">
+        <div class="panel-head">
+          <h2 id="personalNoteTitle">個人メモ</h2>
+          <span class="selected-meta">選択中の選手</span>
+        </div>
+        <div class="panel-body">
+          <textarea id="personalNote" class="comment-box personal-note-box" placeholder="選択中の選手について、レーンで見えた癖、練習で確認したいこと、次回見るポイントなど"></textarea>
+        </div>
+      </div>
+
+      <div class="panel notes-panel">
+        <div class="panel-head">
+          <h2>コメント</h2>
+          <span class="selected-meta">自動保存</span>
+        </div>
+        <div class="panel-body">
+          <textarea id="analysisNotes" class="comment-box" placeholder="試合後の気づき、比較メモ、次回確認したい点など"></textarea>
+        </div>
+      </div>
+
+      <div class="panel radar-panel">
+        <div class="panel-head">
+          <h2>特長レーダー</h2>
+          <span class="selected-meta">ドラッグで変更</span>
+        </div>
+        <div class="panel-body">
+          <div class="profile">
+            <div>
+              <p id="selectedName" class="selected-name"></p>
+              <div id="selectedMeta" class="selected-meta"></div>
+            </div>
+            <label>
+              <span class="label">Rank</span>
+              <select id="rankSelect"></select>
+            </label>
+          </div>
+          <div class="chart-wrap">
+            <canvas id="radar" width="480" height="480" aria-label="特長レーダー"></canvas>
+          </div>
+          <div id="axisEditor" class="axis-editor"></div>
+        </div>
+      </div>
+
+    </section>
+
+    <section id="memoPage" class="memo-page view-hidden">
+      <div class="panel">
+        <div class="panel-head">
+          <h2>5人分 個人メモ</h2>
+          <span class="selected-meta">共有・保存用</span>
+        </div>
+        <div class="panel-body">
+          <div class="memo-toolbar">
+            <div class="actions">
+              <button id="saveAllMemoImageBtn" type="button">5人メモ画像保存</button>
+              <button id="copyMemoDataBtn" type="button">メモJSONコピー</button>
+              <button id="downloadMemoDataBtn" type="button">メモJSON保存</button>
+            </div>
+          </div>
+          <div id="memoGrid" class="memo-grid"></div>
+        </div>
+      </div>
+    </section>
+  </main>
+  <div id="toast" class="toast" aria-live="polite"></div>
+
+  <script>
+    const storageKey = "teamforge-v1";
+    const axes = [
+      { key: "mechanics", label: "操作", desc: "入力精度、コンボ、サモスペ、基本操作の安定感。" },
+      { key: "lane", label: "レーン基礎", desc: "CS、ウェーブ管理、トレード、リコール判断。" },
+      { key: "fight", label: "戦闘判断", desc: "キルライン、仕掛け、引き際、小規模戦。" },
+      { key: "info", label: "情報認識", desc: "ミニマップ、視界、敵位置予測、危険察知。" },
+      { key: "repeat", label: "再現性", desc: "良いプレイを次の試合に持ち込めるか。" }
+    ];
+
+    const ranks = [
+      "Iron IV", "Iron III", "Iron II", "Iron I",
+      "Bronze IV", "Bronze III", "Bronze II", "Bronze I",
+      "Silver IV", "Silver III", "Silver II", "Silver I",
+      "Gold IV"
+    ];
+
+    const defaults = [
+      {
+        id: "korori",
+        role: "Top",
+        name: "御結美ころり",
+        summoner: "御結美ころり#TTV",
+        rank: "Iron IV",
+        lp: 0,
+        scores: { mechanics: 5, lane: 5, fight: 5, info: 5, repeat: 5 }
+      },
+      {
+        id: "kuma",
+        role: "Jungle",
+        name: "くまちゃんねる",
+        summoner: "kumakumatwitch#0129",
+        rank: "Iron IV",
+        lp: 0,
+        scores: { mechanics: 5, lane: 5, fight: 5, info: 5, repeat: 5 }
+      },
+      {
+        id: "nanachika",
+        role: "Mid",
+        name: "ななちか",
+        summoner: "ななーち#ヨネOTP",
+        rank: "Iron IV",
+        lp: 0,
+        scores: { mechanics: 5, lane: 5, fight: 5, info: 5, repeat: 5 }
+      },
+      {
+        id: "kurena",
+        role: "ADC",
+        name: "夕雷くれな",
+        summoner: "Yukami907#HIMA",
+        rank: "Iron IV",
+        lp: 0,
+        scores: { mechanics: 5, lane: 5, fight: 5, info: 5, repeat: 5 }
+      },
+      {
+        id: "uni",
+        role: "Support",
+        name: "リオネクレイジーゼリー",
+        summoner: "犬泥棒#えんざい",
+        rank: "Iron IV",
+        lp: 0,
+        scores: { mechanics: 5, lane: 5, fight: 5, info: 5, repeat: 5 }
+      }
+    ];
+
+    let state = loadState();
+    let selectedId = state.selectedId || state.members[0].id;
+    let draggingAxis = null;
+
+    const rowsEl = document.getElementById("memberRows");
+    const selectedNameEl = document.getElementById("selectedName");
+    const selectedMetaEl = document.getElementById("selectedMeta");
+    const rankSelectEl = document.getElementById("rankSelect");
+    const axisEditorEl = document.getElementById("axisEditor");
+    const teamTrendsEl = document.getElementById("teamTrends");
+    const trendStatusEl = document.getElementById("trendStatus");
+    const analysisNotesEl = document.getElementById("analysisNotes");
+    const personalNoteEl = document.getElementById("personalNote");
+    const personalNoteTitleEl = document.getElementById("personalNoteTitle");
+    const mainViewEl = document.getElementById("mainView");
+    const memoPageEl = document.getElementById("memoPage");
+    const memoPageBtnEl = document.getElementById("memoPageBtn");
+    const memoGridEl = document.getElementById("memoGrid");
+    const toastEl = document.getElementById("toast");
+    const canvas = document.getElementById("radar");
+    const ctx = canvas.getContext("2d");
+
+    function loadState() {
+      try {
+        const raw = localStorage.getItem(storageKey);
+        if (!raw) return { members: structuredClone(defaults), selectedId: defaults[0].id, notes: "", memberNotes: {} };
+        const parsed = JSON.parse(raw);
+        const merged = structuredClone(defaults).map(member => {
+          const saved = parsed.members?.find(item => item.id === member.id);
+          return saved ? { ...member, rank: saved.rank || member.rank, lp: Number.isFinite(saved.lp) ? saved.lp : member.lp, scores: { ...member.scores, ...saved.scores } } : member;
+        });
+        return { members: merged, selectedId: parsed.selectedId || merged[0].id, notes: parsed.notes || "", memberNotes: parsed.memberNotes || {} };
+      } catch {
+        return { members: structuredClone(defaults), selectedId: defaults[0].id, notes: "", memberNotes: {} };
+      }
+    }
+
+    function saveState() {
+      state.selectedId = selectedId;
+      state.notes = analysisNotesEl.value;
+      state.memberNotes = state.memberNotes || {};
+      if (personalNoteEl) state.memberNotes[selectedId] = personalNoteEl.value;
+      localStorage.setItem(storageKey, JSON.stringify(state, null, 2));
+      const saveStateEl = document.getElementById("saveState");
+      saveStateEl.textContent = "保存済み";
+      setTimeout(() => saveStateEl.textContent = "自動保存", 850);
+    }
+
+    function currentMember() {
+      return state.members.find(member => member.id === selectedId) || state.members[0];
+    }
+
+    function scoreClass(value) {
+      if (value <= 4) return "low";
+      if (value <= 7) return "mid";
+      return "high";
+    }
+
+    function getAxis(key) {
+      return axes.find(axis => axis.key === key);
+    }
+
+    function opggUrl(summoner) {
+      const [gameName, tagLine = ""] = summoner.split("#");
+      return `https://www.op.gg/summoners/jp/${encodeURIComponent(gameName)}-${encodeURIComponent(tagLine)}`;
+    }
+
+    function opggMultiSearchUrl() {
+      const summoners = state.members.map(member => member.summoner).join(",");
+      return `https://op.gg/ja/lol/multisearch/jp?summoners=${encodeURIComponent(summoners)}`;
+    }
+
+    function rankApiUrl() {
+      if (location.protocol === "file:") return "http://127.0.0.1:8790/api/ranks";
+      return `${location.origin}/api/ranks`;
+    }
+
+    async function syncRanksFromOpgg({ silent = false } = {}) {
+      const button = document.getElementById("syncRankBtn");
+      if (!button) return;
+      const apiUrl = rankApiUrl();
+      if (!apiUrl) {
+        if (!silent) showToast("公開版ではランク同期APIが未設定です");
+        return;
+      }
+      button.disabled = true;
+      button.textContent = "同期中...";
+
+      try {
+        const response = await fetch(apiUrl, { cache: "no-store" });
+        if (!response.ok) throw new Error("rank sync failed");
+        const result = await response.json();
+        let updated = 0;
+
+        for (const member of state.members) {
+          const rankData = result.ranks?.[member.id];
+          const rank = typeof rankData === "string" ? rankData : rankData?.rank;
+          const lp = typeof rankData === "object" ? rankData.lp : null;
+          if (rank && ranks.includes(rank) && member.rank !== rank) {
+            member.rank = rank;
+            updated += 1;
+          }
+          if (Number.isFinite(lp) && member.lp !== lp) {
+            member.lp = lp;
+            updated += 1;
+          }
+        }
+
+        button.textContent = "ランク同期";
+        render();
+        if (!silent) showToast(updated ? `${updated}人のランクを同期しました` : "ランクは最新です");
+      } catch {
+        button.textContent = "ランク同期";
+        if (!silent) {
+          const local = location.hostname === "127.0.0.1" || location.hostname === "localhost";
+          showToast(local ? "ランク同期サーバーを起動してください" : "公開版ではランク同期APIが未設定です");
+        }
+      } finally {
+        button.disabled = false;
+      }
+    }
+
+    function teamProfile() {
+      const averages = axes.map(axis => {
+        const total = state.members.reduce((sum, member) => sum + member.scores[axis.key], 0);
+        return { ...axis, value: Math.round(total / state.members.length * 10) / 10 };
+      });
+      const strongest = [...averages].sort((a, b) => b.value - a.value)[0];
+      const weakest = [...averages].sort((a, b) => a.value - b.value)[0];
+      const volatile = axes.map(axis => {
+        const values = state.members.map(member => member.scores[axis.key]);
+        return { ...axis, value: Math.max(...values) - Math.min(...values) };
+      }).sort((a, b) => b.value - a.value)[0];
+
+      return { averages, strongest, weakest, volatile };
+    }
+
+    function render() {
+      const member = currentMember();
+      renderRows();
+      renderProfile(member);
+      renderRadar(member);
+      renderEditors(member);
+      renderTeamTrends();
+      renderPersonalNote(member);
+      renderMemoPage();
+      renderNotes();
+      saveState();
+    }
+
+    function renderNotes() {
+      if (analysisNotesEl.value !== (state.notes || "")) {
+        analysisNotesEl.value = state.notes || "";
+      }
+    }
+
+    function renderPersonalNote(member) {
+      state.memberNotes = state.memberNotes || {};
+      personalNoteTitleEl.textContent = `${member.name} の個人メモ`;
+      const note = state.memberNotes[member.id] || "";
+      if (personalNoteEl.value !== note) {
+        personalNoteEl.value = note;
+      }
+    }
+
+    function memoPayload() {
+      return {
+        title: "TeamForge player notes",
+        exportedAt: new Date().toISOString(),
+        members: state.members.map(member => ({
+          id: member.id,
+          role: member.role,
+          name: member.name,
+          summoner: member.summoner,
+          rank: member.rank,
+          note: state.memberNotes?.[member.id] || ""
+        }))
+      };
+    }
+
+    function renderMemoPage() {
+      const payload = memoPayload();
+      memoGridEl.innerHTML = payload.members.map(member => `
+        <article class="memo-card">
+          <span class="role ${member.role}">${member.role}</span>
+          <h3>${member.name}</h3>
+          <div class="summoner">${member.summoner}</div>
+          <div class="selected-meta">${member.rank}</div>
+          <div class="memo-text">${escapeHtml(member.note || "メモなし")}</div>
+        </article>
+      `).join("");
+    }
+
+    function escapeHtml(value) {
+      return String(value)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+
+    function renderRows() {
+      rowsEl.innerHTML = state.members.map(member => {
+        const cells = axes.map(axis => {
+          const value = member.scores[axis.key];
+          return `<td><span class="score ${scoreClass(value)}">${value}</span></td>`;
+        }).join("");
+        return `
+          <tr class="member-row ${member.id === selectedId ? "active" : ""}" data-id="${member.id}" tabindex="0" role="button" aria-label="${member.name}を選択">
+            <td>
+              <span class="role ${member.role}">${member.role}</span>
+              <strong><a class="opgg-link" href="${opggUrl(member.summoner)}" target="_blank" rel="noopener noreferrer">${member.name}</a></strong>
+              <div class="summoner">${member.summoner}</div>
+            </td>
+            ${cells}
+            <td>${member.rank}</td>
+          </tr>
+        `;
+      }).join("");
+      rowsEl.querySelectorAll("tr").forEach(row => {
+        const selectRow = () => {
+          selectedId = row.dataset.id;
+          render();
+        };
+        row.addEventListener("click", selectRow);
+        row.addEventListener("keydown", event => {
+          if (event.key !== "Enter" && event.key !== " ") return;
+          event.preventDefault();
+          selectRow();
+        });
+      });
+      rowsEl.querySelectorAll(".opgg-link").forEach(link => {
+        link.addEventListener("click", event => event.stopPropagation());
+      });
+    }
+
+    function renderProfile(member) {
+      selectedNameEl.textContent = member.name;
+      selectedMetaEl.innerHTML = `${member.role}<br>${member.summoner}<br>${member.rank}`;
+      rankSelectEl.innerHTML = ranks.map(rank => `<option ${rank === member.rank ? "selected" : ""}>${rank}</option>`).join("");
+      rankSelectEl.onchange = () => {
+        member.rank = rankSelectEl.value;
+        render();
+      };
+    }
+
+    function renderEditors(member) {
+      axisEditorEl.innerHTML = axes.map(axis => {
+        const current = member.scores[axis.key];
+        const buttons = Array.from({ length: 10 }, (_, index) => {
+          const value = index + 1;
+          return `<button type="button" class="${value === current ? "active" : ""}" data-axis="${axis.key}" data-value="${value}" aria-label="${axis.label}を${value}にする">${value}</button>`;
+        }).join("");
+        return `
+          <div class="axis-block">
+            <div class="axis-top">
+              <span class="axis-name">${axis.label}</span>
+              <span class="score ${scoreClass(current)}">${current}</span>
+            </div>
+            <div class="axis-desc">${axis.desc}</div>
+            <div class="stepper">${buttons}</div>
+          </div>
+        `;
+      }).join("");
+      axisEditorEl.querySelectorAll("button").forEach(button => {
+        button.addEventListener("click", () => {
+          updateScore(button.dataset.axis, Number(button.dataset.value));
+        });
+      });
+    }
+
+    function renderTeamTrends() {
+      const team = teamProfile();
+      trendStatusEl.textContent = `弱点: ${team.weakest.label}`;
+      teamTrendsEl.innerHTML = team.averages.map(axis => `
+        <div class="trend-card">
+          <div class="label">${axis.label}</div>
+          <div class="trend-value">${axis.value}</div>
+          <div class="trend-bar" aria-hidden="true"><span class="trend-fill" style="width: ${axis.value * 10}%"></span></div>
+          <div class="stat-note">${axis.value <= 4 ? "今週の補強候補" : axis.value >= 7 ? "武器化できる領域" : "安定化したい土台"}</div>
+        </div>
+      `).join("");
+    }
+
+    function renderRadar(member) {
+      const size = canvas.width;
+      const center = size / 2;
+      const radius = 178;
+      ctx.clearRect(0, 0, size, size);
+      ctx.lineWidth = 1;
+      ctx.font = "14px Segoe UI, sans-serif";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+
+      for (let level = 2; level <= 10; level += 2) {
+        const r = radius * level / 10;
+        drawPolygon(r, "rgba(249, 244, 241, .22)", null);
+      }
+
+      axes.forEach((axis, index) => {
+        const point = pointFor(index, radius);
+        ctx.beginPath();
+        ctx.moveTo(center, center);
+        ctx.lineTo(point.x, point.y);
+        ctx.strokeStyle = "rgba(249, 244, 241, .2)";
+        ctx.stroke();
+
+        const labelPoint = pointFor(index, radius + 36);
+        ctx.fillStyle = "#f9f4f1";
+        ctx.fillText(axis.label, labelPoint.x, labelPoint.y);
+      });
+
+      const points = axes.map((axis, index) => pointFor(index, radius * member.scores[axis.key] / 10));
+      ctx.beginPath();
+      points.forEach((point, index) => {
+        if (index === 0) ctx.moveTo(point.x, point.y);
+        else ctx.lineTo(point.x, point.y);
+      });
+      ctx.closePath();
+      ctx.fillStyle = "rgba(136, 160, 255, .2)";
+      ctx.fill();
+      ctx.strokeStyle = "#88a0ff";
+      ctx.lineWidth = 3;
+      ctx.stroke();
+
+      points.forEach((point, index) => {
+        const axis = axes[index];
+        ctx.beginPath();
+        ctx.arc(point.x, point.y, 8, 0, Math.PI * 2);
+        ctx.fillStyle = scoreColor(member.scores[axis.key]);
+        ctx.fill();
+        ctx.strokeStyle = "#f9f4f1";
+        ctx.lineWidth = 3;
+        ctx.stroke();
+      });
+
+      function drawPolygon(r, stroke, fill) {
+        ctx.beginPath();
+        axes.forEach((_, index) => {
+          const point = pointFor(index, r);
+          if (index === 0) ctx.moveTo(point.x, point.y);
+          else ctx.lineTo(point.x, point.y);
+        });
+        ctx.closePath();
+        if (fill) {
+          ctx.fillStyle = fill;
+          ctx.fill();
+        }
+        ctx.strokeStyle = stroke;
+        ctx.stroke();
+      }
+    }
+
+    function scoreColor(value) {
+      if (value <= 4) return "#e7a0ad";
+      if (value <= 7) return "#e7d18a";
+      return "#9ed7bd";
+    }
+
+    function pointFor(index, radius) {
+      const angle = -Math.PI / 2 + index * Math.PI * 2 / axes.length;
+      return {
+        x: canvas.width / 2 + Math.cos(angle) * radius,
+        y: canvas.height / 2 + Math.sin(angle) * radius
+      };
+    }
+
+    function updateScore(axisKey, value) {
+      const member = currentMember();
+      member.scores[axisKey] = Math.max(1, Math.min(10, Math.round(value)));
+      render();
+    }
+
+    function nearestAxis(event) {
+      const rect = canvas.getBoundingClientRect();
+      const scale = canvas.width / rect.width;
+      const x = (event.clientX - rect.left) * scale;
+      const y = (event.clientY - rect.top) * scale;
+      const dx = x - canvas.width / 2;
+      const dy = y - canvas.height / 2;
+      let angle = Math.atan2(dy, dx) + Math.PI / 2;
+      if (angle < 0) angle += Math.PI * 2;
+      const index = Math.round(angle / (Math.PI * 2 / axes.length)) % axes.length;
+      const distance = Math.sqrt(dx * dx + dy * dy);
+      return { axis: axes[index], value: distance / 178 * 10 };
+    }
+
+    canvas.addEventListener("pointerdown", event => {
+      const target = nearestAxis(event);
+      draggingAxis = target.axis.key;
+      canvas.setPointerCapture(event.pointerId);
+      updateScore(draggingAxis, target.value);
+    });
+
+    canvas.addEventListener("pointermove", event => {
+      if (!draggingAxis) return;
+      const target = nearestAxis(event);
+      updateScore(draggingAxis, target.value);
+    });
+
+    canvas.addEventListener("pointerup", () => {
+      draggingAxis = null;
+    });
+
+    async function copyText(text, message) {
+      try {
+        await navigator.clipboard.writeText(text);
+      } catch {
+        const textarea = document.createElement("textarea");
+        textarea.value = text;
+        textarea.setAttribute("readonly", "");
+        textarea.style.position = "fixed";
+        textarea.style.left = "-9999px";
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand("copy");
+        textarea.remove();
+      }
+      showToast(message);
+    }
+
+    async function savePageImage() {
+      const app = document.querySelector(".app");
+      const rect = app.getBoundingClientRect();
+      const width = Math.ceil(Math.max(app.scrollWidth, rect.width));
+      const height = Math.ceil(Math.max(app.scrollHeight, rect.height));
+      const clone = app.cloneNode(true);
+      clone.querySelectorAll("canvas").forEach((canvasClone, index) => {
+        const source = app.querySelectorAll("canvas")[index];
+        const image = document.createElement("img");
+        image.src = source.toDataURL("image/png");
+        image.width = source.width;
+        image.height = source.height;
+        image.style.width = source.style.width || "100%";
+        image.style.height = "auto";
+        canvasClone.replaceWith(image);
+      });
+
+      const styleText = Array.from(document.styleSheets)
+        .map(sheet => {
+          try {
+            return Array.from(sheet.cssRules).map(rule => rule.cssText).join("\n");
+          } catch {
+            return "";
+          }
+        })
+        .join("\n");
+      const html = `
+        <svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}">
+          <foreignObject width="100%" height="100%">
+            <div xmlns="http://www.w3.org/1999/xhtml" style="width:${width}px; min-height:${height}px; background:#202847;">
+              <style>${styleText}</style>
+              ${clone.outerHTML}
+            </div>
+          </foreignObject>
+        </svg>`;
+
+      const downloadBlob = async (blobForDownload, filename, description, accept) => {
+        if (window.showSaveFilePicker) {
+          try {
+            const handle = await window.showSaveFilePicker({
+              suggestedName: filename,
+              types: [
+                {
+                  description,
+                  accept
+                }
+              ]
+            });
+            const writable = await handle.createWritable();
+            await writable.write(blobForDownload);
+            await writable.close();
+            return true;
+          } catch (error) {
+            if (error.name === "AbortError") return false;
+          }
+        }
+
+        const downloadUrl = URL.createObjectURL(blobForDownload);
+        const link = document.createElement("a");
+        link.href = downloadUrl;
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        setTimeout(() => URL.revokeObjectURL(downloadUrl), 1000);
+        return true;
+      };
+
+      const svgBlob = new Blob([html], { type: "image/svg+xml;charset=utf-8" });
+      const svgUrl = URL.createObjectURL(svgBlob);
+      const image = new Image();
+
+      try {
+        await new Promise((resolve, reject) => {
+          image.onload = resolve;
+          image.onerror = reject;
+          image.src = svgUrl;
+        });
+
+        const outputCanvas = document.createElement("canvas");
+        outputCanvas.width = width;
+        outputCanvas.height = height;
+        const outputContext = outputCanvas.getContext("2d");
+        outputContext.fillStyle = "#202847";
+        outputContext.fillRect(0, 0, width, height);
+        outputContext.drawImage(image, 0, 0);
+
+        const jpegBlob = await new Promise(resolve => {
+          outputCanvas.toBlob(resolve, "image/jpeg", 0.94);
+        });
+
+        if (!jpegBlob) {
+          showToast("JPEG保存に失敗しました");
+          return;
+        }
+
+        const saved = await downloadBlob(
+          jpegBlob,
+          "teamforge.jpg",
+          "JPEG画像",
+          { "image/jpeg": [".jpg", ".jpeg"] }
+        );
+        if (saved) showToast("JPEG画像を保存しました");
+      } catch {
+        showToast("JPEG保存に失敗しました");
+      } finally {
+        URL.revokeObjectURL(svgUrl);
+      }
+    }
+
+    async function savePageImage() {
+      const getSaveHandle = async (filename, description, accept) => {
+        if (window.showSaveFilePicker) {
+          try {
+            return await window.showSaveFilePicker({
+              suggestedName: filename,
+              types: [{ description, accept }]
+            });
+          } catch (error) {
+            if (error.name === "AbortError") return null;
+          }
+        }
+        return null;
+      };
+
+      const downloadBlob = async (blobForDownload, filename, handle) => {
+        if (handle) {
+          try {
+            const writable = await handle.createWritable();
+            await writable.write(blobForDownload);
+            await writable.close();
+            return true;
+          } catch {
+            showToast("保存先への書き込みに失敗しました");
+          }
+        }
+        const downloadUrl = URL.createObjectURL(blobForDownload);
+        const link = document.createElement("a");
+        link.href = downloadUrl;
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        setTimeout(() => URL.revokeObjectURL(downloadUrl), 1000);
+        return true;
+      };
+
+      const exportCanvas = document.createElement("canvas");
+      exportCanvas.width = 1600;
+      exportCanvas.height = 1180;
+      const exportCtx = exportCanvas.getContext("2d");
+      const selected = currentMember();
+      const trends = teamProfile();
+
+      const drawRoundRect = (x, y, w, h, r, fill, stroke = "rgba(249, 244, 241, .2)") => {
+        exportCtx.beginPath();
+        exportCtx.moveTo(x + r, y);
+        exportCtx.arcTo(x + w, y, x + w, y + h, r);
+        exportCtx.arcTo(x + w, y + h, x, y + h, r);
+        exportCtx.arcTo(x, y + h, x, y, r);
+        exportCtx.arcTo(x, y, x + w, y, r);
+        exportCtx.closePath();
+        exportCtx.fillStyle = fill;
+        exportCtx.fill();
+        exportCtx.strokeStyle = stroke;
+        exportCtx.lineWidth = 1;
+        exportCtx.stroke();
+      };
+
+      const drawText = (text, x, y, size = 22, color = "#f9f4f1", weight = 500, align = "left") => {
+        exportCtx.fillStyle = color;
+        exportCtx.font = `${weight} ${size}px Segoe UI, Meiryo, sans-serif`;
+        exportCtx.textAlign = align;
+        exportCtx.textBaseline = "top";
+        exportCtx.fillText(String(text), x, y);
+      };
+
+      const wrapText = (text, x, y, maxWidth, lineHeight, size = 22, color = "#d6c9dc") => {
+        exportCtx.fillStyle = color;
+        exportCtx.font = `500 ${size}px Segoe UI, Meiryo, sans-serif`;
+        const chars = String(text || "").split("");
+        let line = "";
+        let currentY = y;
+        chars.forEach(char => {
+          const nextLine = line + char;
+          if (exportCtx.measureText(nextLine).width > maxWidth && line) {
+            exportCtx.fillText(line, x, currentY);
+            line = char;
+            currentY += lineHeight;
+          } else {
+            line = nextLine;
+          }
+        });
+        if (line) exportCtx.fillText(line, x, currentY);
+      };
+
+      const drawScore = (value, x, y) => {
+        const fill = value <= 4 ? "#e7a0ad" : value <= 7 ? "#e7d18a" : "#9ed7bd";
+        drawRoundRect(x, y, 42, 36, 8, fill, fill);
+        drawText(value, x + 21, y + 7, 18, "#202847", 800, "center");
+      };
+
+      exportCtx.fillStyle = "#060914";
+      exportCtx.fillRect(0, 0, exportCanvas.width, exportCanvas.height);
+      const exportGradient = exportCtx.createLinearGradient(0, 0, 1600, 1180);
+      exportGradient.addColorStop(0, "#060914");
+      exportGradient.addColorStop(.55, "#11182e");
+      exportGradient.addColorStop(1, "#202847");
+      exportCtx.fillStyle = exportGradient;
+      exportCtx.fillRect(32, 32, 1536, 1116);
+
+      drawText("TeamForge", 56, 44, 54, "#f9f4f1", 800);
+      drawText(new Date().toLocaleString("ja-JP"), 1544, 60, 20, "#d6c9dc", 500, "right");
+
+      drawRoundRect(48, 130, 900, 500, 8, "rgba(249, 244, 241, .085)");
+      drawText("5人の強弱マップ", 78, 160, 26, "#f9f4f1", 800);
+      const headers = ["生徒", ...axes.map(axis => axis.label), "ランク"];
+      const colX = [78, 370, 470, 570, 670, 770, 850];
+      headers.forEach((header, index) => drawText(header, colX[index], 214, 18, "#d6c9dc", 700, index === 0 ? "left" : "center"));
+
+      state.members.forEach((member, rowIndex) => {
+        const y = 260 + rowIndex * 68;
+        if (member.id === selectedId) drawRoundRect(66, y - 10, 856, 56, 6, "rgba(136, 160, 255, .18)", "rgba(136, 160, 255, .55)");
+        drawText(member.role, 78, y, 16, "#88a0ff", 800);
+        drawText(member.name, 150, y - 2, 20, "#f9f4f1", 800);
+        drawText(member.summoner, 150, y + 25, 14, "#d6c9dc", 500);
+        axes.forEach((axis, index) => drawScore(member.scores[axis.key], colX[index + 1] - 21, y - 5));
+        drawText(member.rank, 850, y + 3, 19, "#f9f4f1", 700, "center");
+      });
+
+      drawRoundRect(980, 130, 572, 760, 8, "rgba(249, 244, 241, .085)");
+      drawText("特長レーダー", 1010, 160, 26, "#f9f4f1", 800);
+      drawText(selected.name, 1010, 205, 30, "#f9f4f1", 800);
+      drawText(`${selected.role} / ${selected.rank}`, 1010, 242, 21, "#d6c9dc", 600);
+
+      const centerX = 1266;
+      const centerY = 500;
+      const radius = 175;
+      const radarPoint = (index, r) => {
+        const angle = -Math.PI / 2 + index * Math.PI * 2 / axes.length;
+        return { x: centerX + Math.cos(angle) * r, y: centerY + Math.sin(angle) * r };
+      };
+
+      for (let level = 2; level <= 10; level += 2) {
+        exportCtx.beginPath();
+        axes.forEach((_, index) => {
+          const point = radarPoint(index, radius * level / 10);
+          if (index === 0) exportCtx.moveTo(point.x, point.y);
+          else exportCtx.lineTo(point.x, point.y);
+        });
+        exportCtx.closePath();
+        exportCtx.strokeStyle = "rgba(249, 244, 241, .22)";
+        exportCtx.lineWidth = 1;
+        exportCtx.stroke();
+      }
+
+      axes.forEach((axis, index) => {
+        const edge = radarPoint(index, radius);
+        exportCtx.beginPath();
+        exportCtx.moveTo(centerX, centerY);
+        exportCtx.lineTo(edge.x, edge.y);
+        exportCtx.strokeStyle = "rgba(249, 244, 241, .2)";
+        exportCtx.stroke();
+        const label = radarPoint(index, radius + 36);
+        drawText(axis.label, label.x, label.y - 11, 18, "#f9f4f1", 700, "center");
+      });
+
+      const radarPoints = axes.map((axis, index) => radarPoint(index, radius * selected.scores[axis.key] / 10));
+      exportCtx.beginPath();
+      radarPoints.forEach((point, index) => {
+        if (index === 0) exportCtx.moveTo(point.x, point.y);
+        else exportCtx.lineTo(point.x, point.y);
+      });
+      exportCtx.closePath();
+      exportCtx.fillStyle = "rgba(136, 160, 255, .2)";
+      exportCtx.fill();
+      exportCtx.strokeStyle = "#88a0ff";
+      exportCtx.lineWidth = 4;
+      exportCtx.stroke();
+      radarPoints.forEach((point, index) => {
+        exportCtx.beginPath();
+        exportCtx.arc(point.x, point.y, 10, 0, Math.PI * 2);
+        exportCtx.fillStyle = scoreColor(selected.scores[axes[index].key]);
+        exportCtx.fill();
+        exportCtx.strokeStyle = "#f9f4f1";
+        exportCtx.lineWidth = 4;
+        exportCtx.stroke();
+      });
+
+      axes.forEach((axis, index) => {
+        const x = 1010 + (index % 2) * 260;
+        const y = 735 + Math.floor(index / 2) * 54;
+        drawRoundRect(x, y, 235, 40, 6, "rgba(249, 244, 241, .12)");
+        drawText(axis.label, x + 14, y + 10, 17, "#f9f4f1", 700);
+        drawScore(selected.scores[axis.key], x + 180, y + 2);
+      });
+
+      drawRoundRect(48, 660, 900, 220, 8, "rgba(249, 244, 241, .085)");
+      drawText("チーム傾向", 78, 690, 26, "#f9f4f1", 800);
+      const trendItems = [
+        ["平均が高い項目", `${trends.strongest.label} ${trends.strongest.value.toFixed(1)}`],
+        ["平均が低い項目", `${trends.weakest.label} ${trends.weakest.value.toFixed(1)}`],
+        ["ばらつきが大きい項目", `${trends.volatile.label} ${trends.volatile.value}`]
+      ];
+      trendItems.forEach((item, index) => {
+        const x = 78 + index * 285;
+        drawRoundRect(x, 742, 255, 92, 8, "rgba(249, 244, 241, .12)");
+        drawText(item[0], x + 18, 762, 17, "#d6c9dc", 700);
+        drawText(item[1], x + 18, 792, 24, "#f9f4f1", 800);
+      });
+
+      drawRoundRect(48, 910, 1504, 210, 8, "rgba(249, 244, 241, .085)");
+      drawText("コメント", 78, 940, 26, "#f9f4f1", 800);
+      wrapText(state.notes || "コメントはまだありません。", 78, 990, 1420, 32, 22, "#d6c9dc");
+
+      if (!window.showSaveFilePicker) {
+        const link = document.createElement("a");
+        link.href = exportCanvas.toDataURL("image/jpeg", 0.94);
+        link.download = "teamforge.jpg";
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        showToast("JPEG画像を保存しました");
+        return;
+      }
+
+      const saveHandle = window.showSaveFilePicker
+        ? await getSaveHandle(
+            "teamforge.jpg",
+            "JPEG画像",
+            { "image/jpeg": [".jpg", ".jpeg"] }
+          )
+        : null;
+      if (window.showSaveFilePicker && !saveHandle) return;
+
+      const jpegBlob = await new Promise(resolve => exportCanvas.toBlob(resolve, "image/jpeg", 0.94));
+      if (!jpegBlob || jpegBlob.size < 1000) {
+        showToast("JPEG保存に失敗しました");
+        return;
+      }
+
+      const saved = await downloadBlob(jpegBlob, "teamforge.jpg", saveHandle);
+      if (saved) showToast("JPEG画像を保存しました");
+    }
+
+    async function saveBlobFile(blob, filename, description, accept) {
+      if (window.showSaveFilePicker) {
+        try {
+          const handle = await window.showSaveFilePicker({
+            suggestedName: filename,
+            types: [{ description, accept }]
+          });
+          const writable = await handle.createWritable();
+          await writable.write(blob);
+          await writable.close();
+          return true;
+        } catch (error) {
+          if (error.name === "AbortError") return false;
+        }
+      }
+
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+      return true;
+    }
+
+    function drawWrappedText(context, text, x, y, maxWidth, lineHeight, maxLines = 18) {
+      const chars = String(text || "").split("");
+      let line = "";
+      let currentY = y;
+      let lines = 0;
+      for (const char of chars) {
+        const next = line + char;
+        if ((context.measureText(next).width > maxWidth && line) || char === "\n") {
+          context.fillText(line, x, currentY);
+          currentY += lineHeight;
+          lines += 1;
+          line = char === "\n" ? "" : char;
+          if (lines >= maxLines) {
+            context.fillText("...", x, currentY);
+            return;
+          }
+        } else {
+          line = next;
+        }
+      }
+      if (line && lines < maxLines) context.fillText(line, x, currentY);
+    }
+
+    async function saveAllMemoImage() {
+      saveState();
+      const payload = memoPayload();
+      const canvas = document.createElement("canvas");
+      canvas.width = 1600;
+      canvas.height = 1200;
+      const context = canvas.getContext("2d");
+
+      context.fillStyle = "#060914";
+      context.fillRect(0, 0, canvas.width, canvas.height);
+      const gradient = context.createLinearGradient(0, 0, 1600, 1200);
+      gradient.addColorStop(0, "#060914");
+      gradient.addColorStop(.55, "#11182e");
+      gradient.addColorStop(1, "#202847");
+      context.fillStyle = gradient;
+      context.fillRect(24, 24, 1552, 1152);
+
+      context.fillStyle = "#f9f4f1";
+      context.font = "800 54px Segoe UI, Meiryo, sans-serif";
+      context.fillText("TeamForge Notes", 58, 72);
+      context.font = "500 20px Segoe UI, Meiryo, sans-serif";
+      context.fillStyle = "#d6c9dc";
+      context.textAlign = "right";
+      context.fillText(new Date().toLocaleString("ja-JP"), 1540, 76);
+      context.textAlign = "left";
+
+      const cardWidth = 292;
+      const cardHeight = 920;
+      const gap = 14;
+      const startX = 58;
+      const top = 160;
+      payload.members.forEach((member, index) => {
+        const x = startX + index * (cardWidth + gap);
+        context.fillStyle = "rgba(249, 244, 241, .085)";
+        context.strokeStyle = "rgba(249, 244, 241, .2)";
+        context.lineWidth = 1;
+        context.beginPath();
+        context.roundRect(x, top, cardWidth, cardHeight, 8);
+        context.fill();
+        context.stroke();
+
+        context.fillStyle = "#88a0ff";
+        context.font = "800 18px Segoe UI, Meiryo, sans-serif";
+        context.fillText(member.role, x + 18, top + 24);
+        context.fillStyle = "#f9f4f1";
+        context.font = "800 24px Segoe UI, Meiryo, sans-serif";
+        drawWrappedText(context, member.name, x + 18, top + 56, cardWidth - 36, 28, 2);
+        context.fillStyle = "#d6c9dc";
+        context.font = "500 15px Segoe UI, Meiryo, sans-serif";
+        drawWrappedText(context, member.summoner, x + 18, top + 116, cardWidth - 36, 21, 2);
+        context.fillText(member.rank, x + 18, top + 170);
+
+        context.strokeStyle = "rgba(249, 244, 241, .18)";
+        context.beginPath();
+        context.moveTo(x + 18, top + 205);
+        context.lineTo(x + cardWidth - 18, top + 205);
+        context.stroke();
+
+        context.fillStyle = "#f9f4f1";
+        context.font = "500 20px Segoe UI, Meiryo, sans-serif";
+        drawWrappedText(context, member.note || "メモなし", x + 18, top + 238, cardWidth - 36, 31, 20);
+      });
+
+      const blob = await new Promise(resolve => canvas.toBlob(resolve, "image/jpeg", 0.94));
+      if (!blob) {
+        showToast("メモ画像保存に失敗しました");
+        return;
+      }
+      const saved = await saveBlobFile(blob, "teamforge-player-notes.jpg", "JPEG画像", { "image/jpeg": [".jpg", ".jpeg"] });
+      if (saved) showToast("5人分メモ画像を保存しました");
+    }
+
+    function showToast(message) {
+      toastEl.textContent = message;
+      toastEl.classList.add("show");
+      setTimeout(() => toastEl.classList.remove("show"), 1500);
+    }
+
+    function showMainView() {
+      memoPageEl.classList.add("view-hidden");
+      mainViewEl.classList.remove("view-hidden");
+      memoPageBtnEl.textContent = "メモページ";
+      memoPageBtnEl.setAttribute("aria-pressed", "false");
+    }
+
+    function showMemoView() {
+      saveState();
+      renderMemoPage();
+      mainViewEl.classList.add("view-hidden");
+      memoPageEl.classList.remove("view-hidden");
+      memoPageBtnEl.textContent = "通常画面";
+      memoPageBtnEl.setAttribute("aria-pressed", "true");
+    }
+
+    document.getElementById("syncRankBtn").addEventListener("click", () => {
+      syncRanksFromOpgg();
+    });
+
+    document.getElementById("multiSearchBtn").addEventListener("click", () => {
+      window.open(opggMultiSearchUrl(), "_blank", "noopener,noreferrer");
+    });
+
+    memoPageBtnEl.addEventListener("click", () => {
+      if (memoPageEl.classList.contains("view-hidden")) {
+        showMemoView();
+      } else {
+        showMainView();
+      }
+    });
+
+    document.getElementById("saveAllMemoImageBtn").addEventListener("click", () => {
+      saveAllMemoImage().catch(error => {
+        console.error(error);
+        showToast("メモ画像保存でエラーが出ました");
+      });
+    });
+
+    document.getElementById("copyMemoDataBtn").addEventListener("click", () => {
+      saveState();
+      copyText(JSON.stringify(memoPayload(), null, 2), "メモJSONをコピーしました");
+    });
+
+    document.getElementById("downloadMemoDataBtn").addEventListener("click", async () => {
+      saveState();
+      const blob = new Blob([JSON.stringify(memoPayload(), null, 2)], { type: "application/json" });
+      const saved = await saveBlobFile(blob, "teamforge-player-notes.json", "JSON", { "application/json": [".json"] });
+      if (saved) showToast("メモJSONを保存しました");
+    });
+
+    document.getElementById("copyJsonBtn").addEventListener("click", () => {
+      copyText(JSON.stringify(state, null, 2), "JSONをコピーしました");
+    });
+
+    document.getElementById("saveImageBtn").addEventListener("click", () => {
+      savePageImage().catch(error => {
+        console.error(error);
+        showToast("画像保存でエラーが出ました");
+      });
+    });
+
+    document.getElementById("downloadJsonBtn").addEventListener("click", async () => {
+      const blob = new Blob([JSON.stringify(state, null, 2)], { type: "application/json" });
+      if (window.showSaveFilePicker) {
+        try {
+          const handle = await window.showSaveFilePicker({
+            suggestedName: "teamforge.json",
+            types: [
+              {
+                description: "JSON",
+                accept: { "application/json": [".json"] }
+              }
+            ]
+          });
+          const writable = await handle.createWritable();
+          await writable.write(blob);
+          await writable.close();
+          showToast("JSONを保存しました");
+          return;
+        } catch (error) {
+          if (error.name === "AbortError") return;
+        }
+      }
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = "teamforge.json";
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+      showToast("JSONを保存しました");
+    });
+
+    analysisNotesEl.addEventListener("input", () => {
+      state.notes = analysisNotesEl.value;
+      saveState();
+    });
+
+    personalNoteEl.addEventListener("input", () => {
+      state.memberNotes = state.memberNotes || {};
+      state.memberNotes[selectedId] = personalNoteEl.value;
+      renderMemoPage();
+      saveState();
+    });
+
+    document.getElementById("resetBtn").addEventListener("click", () => {
+      if (!confirm("評価値とランクを初期状態に戻しますか？")) return;
+      state = { members: structuredClone(defaults), selectedId: defaults[0].id, notes: "", memberNotes: {} };
+      selectedId = state.selectedId;
+      render();
+    });
+
+    render();
+    if (location.hostname === "127.0.0.1" || location.hostname === "localhost") {
+      syncRanksFromOpgg({ silent: true });
+    }
+  </script>
+</body>
+</html>

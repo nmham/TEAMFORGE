@@ -1,0 +1,5 @@
+work/*.log
+outputs/*.log
+outputs/*.png
+node_modules/
+.DS_Store
